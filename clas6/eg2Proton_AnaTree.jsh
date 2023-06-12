@@ -1,7 +1,7 @@
 import org.jlab.jnp.hipo4.data.*;
 import org.jlab.jnp.hipo4.io.*;
-import org.jlab.jnp.physics.*;
-import org.jlab.jnp.pdg.PhysicsConstants;
+import org.jlab.clas.physics.*;
+import org.jlab.clas.pdg.PhysicsConstants;
 
 import org.jlab.groot.base.GStyle
 import org.jlab.groot.data.*;
@@ -10,14 +10,11 @@ import org.jlab.groot.tree.*; // new import for ntuples
 
 int maxEvents = -1;
 String outFile = "eg2Proton_AnaTree_Hists.hipo"; // name of the outpfile that the histograms are written
-String filename = "ntuple_C_Npos.hipo"; // name of the inout file with the data tree
+String fileName = "ntuple_C_Npos.hipo"; // name of the inout file with the data tree
 
 long st = System.currentTimeMillis(); // start time
 
-//HipoReader reader = new HipoReader();
-//reader.open(fileName);
 TreeHipo tree = new TreeHipo(fileName,"protonTree::tree"); // the writer adds ::tree to the name of the tree
-//tree.setReader(reader);
 int entries = tree.getEntries();   // get the number of events in the file
 System.out.println(" ENTRIES = " + entries);  // print the number of events in the file to the screen
 
@@ -26,23 +23,26 @@ if(maxEvents < 0){
   maxEvents = entries;
 }
 
-List vec = tree.getDataVectors("q2:W:nu:yb","",maxEvents);
+// Select the target in the cuts
+// iTgt = 0 (deuterium)
+// iTgt = 1 (solid - C, Fe, or Pb)
+List vec = tree.getDataVectors("q2:W:nu:yb","pFidCut==1&&eFidCut==1&&iTgt==0",maxEvents);
 
 // Create the histograms
-H1F hQ2 = new H1F().create("hQ2",100,vec.get(0),0.0,5.0);
+H1F hQ2 = new H1F().create("hQ2",100,(DataVector)vec.get(0),0.0,5.0);
 hQ2.setTitleX("Q^2 (GeV^2)");
 hQ2.setTitleY("Counts");
-H1F hW = new H1F().create("hW",100,vec.get(1),0.0,3.0);
+H1F hW = new H1F().create("hW",100,(DataVector)vec.get(1),0.0,3.0);
 hW.setTitleX("W (GeV)");
 hW.setTitleY("Counts");
-H1F hNu = new H1F().create("hNu",100,vec.get(2),2.0,4.5);
+H1F hNu = new H1F().create("hNu",100,(DataVector)vec.get(2),2.0,4.5);
 hNu.setTitleX("#nu (GeV)");
 hNu.setTitleY("Counts");
-H1F hYb = new H1F().create("hYb",100,vec.get(3),0.4,1.0);
+H1F hYb = new H1F().create("hYb",100,(DataVector)vec.get(3),0.4,1.0);
 hYb.setTitleX("Y_b");
 hYb.setTitleY("Counts");
 
-def dirname = "/electron";
+String dirname = "/electron";
 TDirectory dir = new TDirectory();
 dir.mkdir(dirname);
 dir.cd(dirname);
