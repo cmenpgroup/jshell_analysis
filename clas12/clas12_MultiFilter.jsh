@@ -15,24 +15,60 @@ import org.jlab.physics.io.DataManager;
 //---------------------------------------------------------------------
 // Create HipoReader object and load in file. Create event class and bank instance.
 HipoReader reader = new HipoReader(); 
-reader.open("/home/grassla/SimOuts.hipo"); 
+reader.open("/home/wood5/SimOuts.hipo"); 
 Event     event = new Event(); 
-Bank  gen = new Bank(reader.getSchemaFactory().getSchema("MC::Particle"));
 Bank  particles = new Bank(reader.getSchemaFactory().getSchema("REC::Particle"));
 
-//----------------------------------------------------------------------
-PhysicsEvent physEvent = DataManager.getPhysicsEvent(10.6,particles);
-
 // Loop through events from Reconstructed bank and fill histograms.
-EventFilter  all = new EventFilter("X+:X-:Xn");
+EventFilter  exclProton = new EventFilter("11:2212"); // filter for exclusive proton
+boolean exclFirstEvt = true; // use to print out the first event from this filter
+
+EventFilter  inclProton_v1 = new EventFilter("11:2212"); // filter for inclusive proton
+inclProton_v1.setInclusive('+');
+boolean inclFirstEvt_v1 = true; // use to print out the first event from this filter
+
+EventFilter  inclProton_v2 = new EventFilter("11:2212:X+"); // filter for inclusive proton
+boolean inclFirstEvt_v2 = true; // use to print out the first evernt from this filter
 
 reader.getEvent(event,0); // Reads the first event and resets to the begining of the file
 
 while(reader.hasNext()==true){
      reader.nextEvent(event);
      event.read(particles);
-     if(all.isValid(physEvent)==true){
-       particles.show();
-       break;
+
+     PhysicsEvent physEvent = DataManager.getPhysicsEvent(10.6,particles);
+
+     // analyze the exclusive event
+     if(exclProton.isValid(physEvent)==true){
+       if(exclFirstEvt==true){
+         System.out.println("%%% Exclusive event %%%");
+         LorentzVector electronV4 = physEvent.getParticle("[11]").vector(); // create a LorentzVector for the electron
+         electronV4.print(); // print the LorentzVector
+         particles.show();  // print the bank contents
+         exclFirstEvt = false;
+       }
+     }
+
+     // analyze the inclusive event by the first method
+     if(inclProton_v1.isValid(physEvent)==true){
+       if(inclFirstEvt_v1==true){
+         System.out.println("*** Inclusice event ***");
+         particles.show();  // print the bank contents
+         inclFirstEvt_v1 = false;
+       }
+     }
+
+     // analyze the inclusive event by the second method
+     if(inclProton_v2.isValid(physEvent)==true){
+       if(inclFirstEvt_v2==true){
+         System.out.println("*** Inclusice event ***");
+         particles.show(); // print the bank contents
+         inclFirstEvt_v2 = false;
+       }
      }
 }
+
+// Print out the summary of these filters
+System.out.println("Exclusive proton summary " + exclProton.summary());
+System.out.println("Inclusive proton (version 1) summary" + inclProton_v1.summary());
+System.out.println("Inclusive proton (version 2) summary" + inclProton_v2.summary());
